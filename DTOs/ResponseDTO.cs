@@ -8,14 +8,11 @@
 
         public long ProcessingTime { get; set; }
 
-        public string message { get; set; }
-
-        public ResponseDTO(string requestTime, string writeTime, long processingTime, string message)
+        public ResponseDTO(string requestTime, string writeTime, long processingTime)
         {
             RequestTime = requestTime;
             WriteTime = writeTime;
             ProcessingTime = processingTime;
-            this.message = message;
         }
     }
 }

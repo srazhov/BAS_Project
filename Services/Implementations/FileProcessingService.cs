@@ -1,6 +1,7 @@
 ﻿using System.Text;
 using BAS_Project.DTOs;
 using BAS_Project.Helpers;
+using Microsoft.Extensions.Options;
 
 namespace BAS_Project.Services.Implementations
 {
@@ -16,23 +17,26 @@ namespace BAS_Project.Services.Implementations
 
         private IWebHostEnvironment AppEnvironment { get; set; }
 
+        private MyConfigs MyConfigs { get; set; }
 
 
-        public FileProcessingService(IWebHostEnvironment appEnvironment)
+
+        public FileProcessingService(IWebHostEnvironment appEnvironment, IOptions<MyConfigs> myConfigs)
         {
             Messages = new Queue<MessageDTO>();
             FinishedMessages = new List<MessageDTO>();
             AppEnvironment = appEnvironment;
+            MyConfigs = myConfigs.Value;
         }
 
-        public string EnqueueMessage(string message)
+        public string EnqueueMessage(string message, DateTime requestTime)
         {
             lock (queueLocker)
             {
                 var messageDTO = new MessageDTO()
                 {
                     MessageId = Guid.NewGuid().ToString(),
-                    StartTime = DateTime.Now,
+                    StartTime = requestTime,
                     Message = message
                 };
 
@@ -57,25 +61,29 @@ namespace BAS_Project.Services.Implementations
                 {
                     var msgsCount = Messages.Count;
                     var sb = new StringBuilder();
-                    for (int i = 0; i < 5 && Messages.TryDequeue(out var messageDTO); i++)
+                    for (int i = 0; i < MyConfigs.MaxSimultaneousOperations && Messages.TryDequeue(out var messageDTO); i++)
                     {
                         messageDTO.WriteTime = DateTime.Now;
 
-                        var formattedText = $"{msgsCount} | {DateHelpers.GetISO_8601String(messageDTO.StartTime)} | " +
-                            $"{DateHelpers.GetISO_8601String(messageDTO.WriteTime)} | {messageDTO.Message}";
+                        var formattedText = GetLineText(msgsCount, messageDTO);
                         sb.AppendLine(formattedText);
 
                         FinishedMessages.Add(messageDTO);
                     }
 
                     writer.Write(sb.ToString());
-                    writer.Flush();
                 }
 
-                Thread.Sleep(1500);
+                Thread.Sleep(MyConfigs.SleepTime);
 
                 return GetAndDeleteItem(messageId); // Always not null
             }
+        }
+
+        private static string GetLineText(int msgsCount, MessageDTO messageDTO)
+        {
+            return $"{msgsCount} | {DateHelpers.GetISO_8601String(messageDTO.StartTime)} | " +
+                $"{DateHelpers.GetISO_8601String(messageDTO.WriteTime)} | {messageDTO.Message}";
         }
 
         private MessageDTO? GetAndDeleteItem(string messageId)
@@ -83,7 +91,7 @@ namespace BAS_Project.Services.Implementations
             var result = FinishedMessages.FirstOrDefault(x => x.MessageId == messageId);
             if (result != null)
             {
-                FinishedMessages.RemoveAll(x => x.MessageId == messageId);
+                FinishedMessages.Remove(result);
             }
 
             return result;

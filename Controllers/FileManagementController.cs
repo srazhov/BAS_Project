@@ -24,15 +24,19 @@ namespace BAS_Project.Controllers
                 return BadRequest(request);
             }
 
-            var messageId = Service.EnqueueMessage(request.Message);
+            if (string.IsNullOrEmpty(request.Message))
+            {
+                throw new ArgumentException("Message must not be null!"); // To suppress CS8604
+            }
+
+            var messageId = Service.EnqueueMessage(request.Message, DateTime.Now);
 
             var message = Service.WriteMessage(messageId);
 
             return Ok(new ResponseDTO(
                 DateHelpers.GetISO_8601String(message.StartTime),
                 DateHelpers.GetISO_8601String(message.WriteTime),
-                (message.WriteTime - message.StartTime).Milliseconds,
-                message.Message));
+                (message.WriteTime - message.StartTime).Milliseconds));
         }
     }
 }
