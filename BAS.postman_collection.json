@@ -1,0 +1,80 @@
+{
+	"info": {
+		"_postman_id": "626dc9c8-8ff1-4242-8523-9b7e7f11c0ef",
+		"name": "BAS",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "13523466"
+	},
+	"item": [
+		{
+			"name": "New Request",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"let myVar = pm.collectionVariables.get(\"processId\");",
+							"myVar ++ // increment by 1",
+							"pm.collectionVariables.set(\"processId\", myVar);",
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"message\": \"{{processId}}\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:5105/api/process",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "5105",
+					"path": [
+						"api",
+						"process"
+					]
+				}
+			},
+			"response": []
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "processId",
+			"value": "1",
+			"type": "string"
+		}
+	]
+}
